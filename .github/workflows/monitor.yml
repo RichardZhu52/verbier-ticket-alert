@@ -1,0 +1,42 @@
+name: Ticket monitor
+
+on:
+  # Safety net: GitHub cron is best-effort and often late, so it fires every
+  # 30 min (UTC). Each run exits in seconds if another run is already polling
+  # or if it is outside ACTIVE_HOURS. A run that reaches RUN_MINUTES hands off
+  # to a fresh run via workflow_dispatch, so polling is continuous.
+  schedule:
+    - cron: "7,37 4-22 * 11,12 *"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # commit data/events.csv (drop history)
+  actions: write    # look for other runs + dispatch the hand-off run
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+      - name: Poll availability and alert
+        run: python3 monitor.py
+        env:
+          WORKFLOW_FILE: monitor.yml
+          COMMIT_EVENTS: "true"
+          GITHUB_TOKEN: ${{ github.token }}
+          # Notification channels (set under Settings -> Secrets and variables -> Actions)
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          NTFY_EMAIL: ${{ secrets.NTFY_EMAIL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          # Optional tuning (Settings -> Variables). Defaults in monitor.py.
+          PRODUCTS: ${{ vars.PRODUCTS }}
+          MIN_TICKETS: ${{ vars.MIN_TICKETS }}
+          POLL_SECONDS: ${{ vars.POLL_SECONDS }}
+          HOT_POLL_SECONDS: ${{ vars.HOT_POLL_SECONDS }}
+          HOT_WINDOW: ${{ vars.HOT_WINDOW }}
+          ACTIVE_HOURS: ${{ vars.ACTIVE_HOURS }}
+          END_DATE: ${{ vars.END_DATE }}
+          HEARTBEAT: ${{ vars.HEARTBEAT }}

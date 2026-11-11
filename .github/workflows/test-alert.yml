@@ -1,0 +1,30 @@
+name: Send test alert
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unit tests
+        run: python3 -m unittest -v test_monitor
+      - name: One live check of the shop + a test notification
+        run: |
+          python3 - <<'EOF'
+          import monitor as m
+          lines = []
+          for pid, info in m.PRODUCTS.items():
+              a, mx = m.fetch_availability(pid, "2026-12-05")
+              lines.append(f"{info['name']}: {a} available ({mx} released so far)")
+          m.notify("TEST - Verbier monitor works", "This is what an alert looks like.\n" + "\n".join(lines),
+                   urgent=True, click=m.PRODUCTS["410650"]["url"], tags=["white_check_mark"])
+          EOF
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          NTFY_EMAIL: ${{ secrets.NTFY_EMAIL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
