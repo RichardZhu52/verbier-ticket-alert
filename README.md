@@ -58,8 +58,9 @@ Polling rate:
 - weekends: every 3 min
 - stops automatically after 4 Dec 2026
 
-It runs on GitHub Actions. Each job polls for about 5 h 30 min, then starts its own successor.
-A cron every 30 minutes restarts the chain if it ever breaks; the extra runs see an active
+It runs on GitHub Actions. Each job runs for about 5 h 30 min, then starts its own successor,
+so the chain never stops, including overnight. Overnight it just waits and doesn't contact the
+site. A cron every 30 minutes restarts the chain if it ever breaks; the extra runs see an active
 run and exit within seconds.
 
 ## Setup (about 5 minutes)

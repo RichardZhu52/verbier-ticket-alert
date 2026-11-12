@@ -2,11 +2,12 @@ name: Ticket monitor
 
 on:
   # Safety net: GitHub cron is best-effort and often late, so it fires every
-  # 30 min (UTC). Each run exits in seconds if another run is already polling
-  # or if it is outside ACTIVE_HOURS. A run that reaches RUN_MINUTES hands off
-  # to a fresh run via workflow_dispatch, so polling is continuous.
+  # 30 min (UTC). Each run exits in seconds if another run is already active.
+  # A run that reaches RUN_MINUTES hands off to a fresh run via
+  # workflow_dispatch, so the chain is continuous day and night (it only
+  # contacts the site during ACTIVE_HOURS).
   schedule:
-    - cron: "7,37 4-22 * 11,12 *"
+    - cron: "7,37 * * 11,12 *"
   workflow_dispatch:
 
 permissions:

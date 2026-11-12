@@ -418,9 +418,6 @@ def main() -> int:
     if not within_campaign(start, cfg):
         print(f"Campaign over (END_DATE={cfg.end_date}). Disable the workflow.")
         return 0
-    if not cfg.once and not in_window(start, cfg.active_hours):
-        print(f"Outside active hours {cfg.active_hours} Europe/Zurich; exiting.")
-        return 0
     if not cfg.once and older_run_active():
         print("Another monitor run is already active; exiting to avoid duplicate polling.")
         return 0
@@ -439,6 +436,13 @@ def main() -> int:
 
     while not stop["flag"]:
         now = datetime.now(timezone.utc)
+        if not cfg.once and not in_window(now, cfg.active_hours):
+            # Overnight: stay alive without contacting the site, so polling
+            # resumes on time in the morning without relying on GitHub cron.
+            if now >= deadline or not within_campaign(now, cfg):
+                break
+            time.sleep(60)
+            continue
         try:
             for pid in cfg.products:
                 available, maximum = fetch_availability(pid, cfg.event_date)
@@ -477,13 +481,13 @@ def main() -> int:
         if cfg.once:
             break
         now = datetime.now(timezone.utc)
-        if now >= deadline or not in_window(now, cfg.active_hours) or not within_campaign(now, cfg):
+        if now >= deadline or not within_campaign(now, cfg):
             break
         time.sleep(poll_interval(now, cfg) + random.uniform(0, 3))
 
     commit_log("end of run")
     now = datetime.now(timezone.utc)
-    if not cfg.once and not stop["flag"] and in_window(now, cfg.active_hours) and within_campaign(now, cfg):
+    if not cfg.once and not stop["flag"] and within_campaign(now, cfg):
         dispatch_next_run()
     return 0
 
