@@ -385,11 +385,16 @@ def older_run_active() -> bool:
     # finish committing. A cron safety-net run just checks once and leaves.
     attempts = 10 if env("GITHUB_EVENT_NAME") == "workflow_dispatch" else 1
     for i in range(attempts):
-        busy = False
-        for status in ("in_progress", "queued"):
-            data = gh_api("GET", f"/actions/workflows/{workflow}/runs?status={status}&per_page=50") or {}
-            if any(r.get("id", 0) < my_id for r in data.get("workflow_runs", [])):
-                busy = True
+        # Only runs that are actually executing count. Queued runs are ignored:
+        # GitHub sometimes leaves ghost runs "queued" for hours, which would
+        # otherwise block every new run. Runs older than 6 h are stale too.
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=6)
+        data = gh_api("GET", f"/actions/workflows/{workflow}/runs?status=in_progress&per_page=50") or {}
+        busy = any(
+            r.get("id", 0) < my_id and r.get("status") == "in_progress"
+            and datetime.fromisoformat(r.get("run_started_at", r.get("created_at", "1970-01-01T00:00:00Z")).replace("Z", "+00:00")) > cutoff
+            for r in data.get("workflow_runs", [])
+        )
         if not busy:
             return False
         if i < attempts - 1:
