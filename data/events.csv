@@ -195,3 +195,5 @@ utc,zurich,product_id,product,available,max,event
 2026-11-25T10:42:58+00:00,2026-11-25T11:42:58+01:00,426820,Opening Session + St. Nicholas Express (with train),0,360,baseline
 2026-11-25T21:56:40+00:00,2026-11-25T22:56:40+01:00,410650,Opening Session (ticket only),0,1630,baseline
 2026-11-25T21:56:40+00:00,2026-11-25T22:56:40+01:00,426820,Opening Session + St. Nicholas Express (with train),0,360,baseline
+2026-11-26T05:00:23+00:00,2026-11-26T06:00:23+01:00,410650,Opening Session (ticket only),0,1630,baseline
+2026-11-26T05:00:23+00:00,2026-11-26T06:00:23+01:00,426820,Opening Session + St. Nicholas Express (with train),0,360,baseline
